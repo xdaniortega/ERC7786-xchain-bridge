@@ -19,7 +19,6 @@ contract QuorumAttestator is Ownable {
 
     mapping(address => bool) public isAttestor;
     address[] public attestorsList;
-    uint256 public signatureThreshold;
 
     event MessageAttested(
         bytes32 indexed messageId,
@@ -53,8 +52,6 @@ contract QuorumAttestator is Ownable {
         if (_threshold > _initialAttestors.length) revert InvalidThreshold();
 
         _addAttestors(_initialAttestors);
-        signatureThreshold = _threshold;
-        emit ThresholdChanged(_threshold);
     }
 
     function _addAttestor(address[] memory _attestors) internal {
@@ -82,11 +79,9 @@ contract QuorumAttestator is Ownable {
         status.numAttestations++;
 
         emit MessageAttested(_messageId, msg.sender, status.numAttestations);
+    }
 
-        if (status.numAttestations == signatureThreshold) {
-            emit AttestationConsensusReached(_messageId);
-
-            //todo: call the execute funtion
-        }
+    function isConsensusReached(bytes32 _messageId) public view returns (bool) {
+        return attestations[_messageId].numAttestations >= signatureThreshold;
     }
 }
