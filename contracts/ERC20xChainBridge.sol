@@ -5,11 +5,11 @@ import {IERC7786GatewaySource, IERC7786Receiver} from "./interfaces/IERC7786.sol
 import {IInputBox} from "./interfaces/IInputbox.sol";
 import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, ReentrancyGuard {
-    using SafeERC20 for IERC20;
-
+    error NotEnoughFunds();
     enum STATE {
         PENDING,
         EXECUTED,
@@ -34,7 +34,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
         inputBox = _inputBox;
     }
 
-    function transferCrossChain(address token, uint256 chainId, address to, uint256 amount) public payable nonReentrant returns (bytes32 mid) {
+    function transferCrossChain(address token, uint256 chainId, address to, uint256 amount) public payable nonReentrant returns (bytes32) {
         IERC20(token).safeTransferFrom(msg.sender, to, amount);
 
         //here for example we could measure the impact on liquidity of the token or smthng, for now 
@@ -52,7 +52,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
         // encode destinationchain with CAIP2
         string memory destinationChain = CAIP2.format(chainId);
         string memory receiver = CAIP10.format(chainId, to);
-        bytes32 mid = sendMessage(destinationChain, receiver, payload, attributes);
+        bytes32 mid = _sendMessage(destinationChain, receiver, payload, attributes);
 
         crossChainTransfers[mid] = CrossChainTransfer({
             token: token,
@@ -74,22 +74,24 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
         string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes32 mid) {
-        if(msg.value < BASE_FEE) revert NotEnoughFunds(msg.value, BASE_FEE);
+    ) public payable returns (bytes32 mid) {
+        return _sendMessage(destinationChain, receiver, payload, attributes);
+    }
+
+    function _sendMessage(string calldata destinationChain, string calldata receiver, bytes calldata payload, bytes[] calldata attributes) internal returns (bytes32 _mid) {
+        if(msg.value < BASE_FEE) revert NotEnoughFunds();
 
         // On a potential production implementation, I'd introduce a DA solution where inputBox would fetch this arguments from
         // and proposeMessage would only be called with the messageId
-        bytes32 mid = IInputBox(inputBox).proposeMessage(destinationChain, receiver, payload, attributes);
+        _mid = IInputBox(inputBox).proposeMessage(destinationChain, receiver, payload, attributes);
 
         emit MessagePosted(
-            mid,
-            CAIP10.format(CAIP2.local(), sender),
+            _mid,
+            CAIP10.format(CAIP2.local(), msg.sender),
             CAIP10.format(destinationChain, receiver),
             payload,
             attributes
-        );
-
-        return mid;
+        );    
     }
 
     // Also here the receiver/execute logic should be implemented

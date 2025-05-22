@@ -52,7 +52,7 @@ contract InputBox is IInputBox, Ownable {
             destinationChain: _destinationChain,
             receiver: _receiver,
             payload: _payload,
-            attributes: _attributes,
+            attributes: _attributes
         });
 
         emit MessageProposed(messageId, msg.sender, _destinationChain, _receiver);
