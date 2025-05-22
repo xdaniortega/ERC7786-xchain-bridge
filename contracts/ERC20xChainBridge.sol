@@ -7,7 +7,7 @@ import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract ERC721xChainBridge is IERC7786Receiver, IERC7786GatewaySource, ReentrancyGuard {
+contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     enum STATE {
@@ -21,45 +21,39 @@ contract ERC721xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentran
         address to;
         uint256 amount;
         uint256 chainId;
-        address payable refundAddress;
+        address refundAddress;
         STATE state;
     }
 
     /// @notice Mock base for a crosschain transfer, this would be fetched from an oracle or a trusted source
-    uint256 immutable baseFee = 0.1 ether;
+    uint256 constant BASE_FEE = 0.1 ether;
     address public inputBox;
-    mapping(bytes32 => CrossChainTransfer) public crossChainTransfers; // mid => crossChainTransfer
+    mapping(bytes32 => CrossChainTransfer) public crossChainTransfers; // messageId => crossChainTransfer
 
-    constructor(address inputBox) {
-        inputBox = inputBox;
+    constructor(address _inputBox) {
+        inputBox = _inputBox;
     }
 
-    function transferCrossChain(address token, address to, uint256 amount, uint256 chainId) public payable nonReentrant returns (bytes32 mid) {
-        bytes memory message = abi.encode(token, to, amount);
-
+    function transferCrossChain(address token, uint256 chainId, address to, uint256 amount) public payable nonReentrant returns (bytes32 mid) {
         IERC20(token).safeTransferFrom(msg.sender, to, amount);
-
-        //here encode logic of transfering into the payload
 
         //here for example we could measure the impact on liquidity of the token or smthng, for now 
         // we will just see how much % of the supply is being transferred
         uint256 supply = IERC20(token).totalSupply();
         uint256 impact = (amount * 100) / supply;
 
-        // encode destinationchain with CAIP2
-        string memory destinationChain = CAIP2.format(chainId);
-        string memory receiver = CAIP10.format(chainId, to);
         // payload will be erc20 mint operation, amount and destination address
         bytes4 operationSelector = IERC20.mint.selector;
         bytes memory payload = abi.encode(operationSelector, token, amount, to);
 
         //todo: check attributes
-        bytes[] memory attributes = new bytes[](1);
-        attributes[0] = abi.encode(impact);
+        bytes[] memory attributes = abi.encode(impact);
 
-        // inside payload I will encode the mint operation, the tokenId and the refundAddress
-        // as attributes the number of attestations required
+        // encode destinationchain with CAIP2
+        string memory destinationChain = CAIP2.format(chainId);
+        string memory receiver = CAIP10.format(chainId, to);
         bytes32 mid = sendMessage(destinationChain, receiver, payload, attributes);
+
         crossChainTransfers[mid] = CrossChainTransfer({
             token: token,
             to: to,
@@ -69,8 +63,9 @@ contract ERC721xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentran
             state: STATE.PENDING
         });
 
-        return mid;
+        //todo:callback handler to burn the tokens
 
+        return mid;
     }
 
     /// @inheritdoc IERC7786GatewaySource
@@ -80,7 +75,7 @@ contract ERC721xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentran
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 mid) {
-        if(msg.value < baseFee) revert NotEnoughFunds(msg.value, baseFee);
+        if(msg.value < BASE_FEE) revert NotEnoughFunds(msg.value, BASE_FEE);
 
         // On a potential production implementation, I'd introduce a DA solution where inputBox would fetch this arguments from
         // and proposeMessage would only be called with the messageId
