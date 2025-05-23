@@ -5,6 +5,11 @@
   "repository": "git@github.com:xdaniortega/ERC7786-xchain-bridge.git",
   "author": "Daniel Ortega <danielortegaberja@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "lint": "prettier --check 'contracts/**/*.sol'",
+    "lint:fix": "prettier --write 'contracts/**/*.sol'",
+    "format": "prettier --write 'contracts/**/*.sol' 'test/**/*.sol'"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
@@ -23,6 +28,8 @@
     "ethers": "^6.4.0",
     "hardhat": "^2.24.0",
     "hardhat-gas-reporter": "^1.0.8",
+    "prettier": "^3.5.3",
+    "prettier-plugin-solidity": "^2.0.0",
     "solidity-coverage": "^0.8.0",
     "ts-node": ">=8.0.0",
     "typechain": "^8.3.0",

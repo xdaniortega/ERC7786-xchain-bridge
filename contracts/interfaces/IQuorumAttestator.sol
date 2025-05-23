@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 interface IQuorumAttestator {
     function isConsensusReached(bytes32 _messageId) external view returns (bool);
-    
+
     /// @notice Assigns the number of required signatures based on message attributes
     /// @param attributes The array of encoded attributes from the message
     /// @return The number of required signatures (1 for low impact, 2 for high impact)

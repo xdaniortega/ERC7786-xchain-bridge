@@ -2,16 +2,8 @@
 pragma solidity ^0.8.20;
 
 interface IInputBox {
-    event MessageProposed(
-        bytes32 indexed messageId,
-        string destinationChain,
-        string receiver
-    );
-    event MessageExecuted(
-        bytes32 indexed messageId,
-        string destinationChain,
-        string receiver
-    );
+    event MessageProposed(bytes32 indexed messageId, string destinationChain, string receiver);
+    event MessageExecuted(bytes32 indexed messageId, string destinationChain, string receiver);
 
     error MessageNotFound();
     error MessageAlreadyExecuted();

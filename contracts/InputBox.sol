@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IInputBox} from "./interfaces/IInputbox.sol";
-import {IQuorumAttestator} from "./interfaces/IQuorumAttestator.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC7786GatewaySource, IERC7786Receiver} from "./interfaces/IERC7786.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import { IInputBox } from "./interfaces/IInputbox.sol";
+import { IQuorumAttestator } from "./interfaces/IQuorumAttestator.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC7786GatewaySource, IERC7786Receiver } from "./interfaces/IERC7786.sol";
+import { CAIP10 } from "@openzeppelin/contracts/utils/CAIP10.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import "forge-std/console.sol";
 
@@ -104,7 +104,8 @@ contract InputBox is IInputBox, Ownable {
 
         MessageData memory message = messageStore[_messageId];
         // Decode message attributes and check if the number of signatures is enough
-        if(IQuorumAttestator(quorumAttestator).getAttestationsReached(_messageId) < message.thresholdSignatures) revert NotEnoughSignatures();
+        if (IQuorumAttestator(quorumAttestator).getAttestationsReached(_messageId) < message.thresholdSignatures)
+            revert NotEnoughSignatures();
 
         _performMessageExecution(
             _messageId,
@@ -160,7 +161,7 @@ contract InputBox is IInputBox, Ownable {
         string memory _receiver,
         bytes memory _payload,
         bytes[] memory _attributes,
-        uint256 _nonce  
+        uint256 _nonce
     ) public pure returns (bytes32) {
         return keccak256(abi.encode(_destinationChain, _receiver, _payload, _attributes, _nonce));
     }
@@ -208,9 +209,16 @@ contract InputBox is IInputBox, Ownable {
         // Compute a unique message ID
         string memory messageIdString = Strings.toHexString(uint256(_messageId));
         (bool success, bytes memory returnData) = address(destinationBridge).call(
-            abi.encodeWithSelector(IERC7786Receiver.executeMessage.selector, messageIdString, _destinationChain, _receiver, _payload, _attributes)
+            abi.encodeWithSelector(
+                IERC7786Receiver.executeMessage.selector,
+                messageIdString,
+                _destinationChain,
+                _receiver,
+                _payload,
+                _attributes
+            )
         );
-        
+
         if (!success) {
             // If the call failed, revert with the error data
             if (returnData.length > 0) {

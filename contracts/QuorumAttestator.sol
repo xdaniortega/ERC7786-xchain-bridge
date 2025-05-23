@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {AttributeLib} from "./libraries/AttributeLib.sol";
+import { AttributeLib } from "./libraries/AttributeLib.sol";
 
 /**
  * @title QuorumAttestator
@@ -21,11 +21,7 @@ contract QuorumAttestator is Ownable {
     mapping(address => bool) public isAttestor;
     address[] public attestorsList;
 
-    event MessageAttested(
-        bytes32 indexed messageId,
-        address indexed attestor,
-        uint256 currentAttestationCount
-    );
+    event MessageAttested(bytes32 indexed messageId, address indexed attestor, uint256 currentAttestationCount);
     event AttestationConsensusReached(bytes32 indexed messageId);
     event AttestorAdded(address indexed attestor);
 
@@ -41,7 +37,7 @@ contract QuorumAttestator is Ownable {
         uint256 numAttestations;
     }
     mapping(bytes32 => AttestationData) public attestations; // messageId => AttestationData
-    
+
     modifier onlyAttestor() {
         if (!isAttestor[msg.sender]) revert NotAttestor();
         _;
@@ -70,7 +66,7 @@ contract QuorumAttestator is Ownable {
         if (impactValue.length == 0) {
             return 1; // Default to low impact if no impact attribute found
         }
-        
+
         string memory impact = abi.decode(impactValue, (string));
         if (keccak256(bytes(impact)) == keccak256(bytes("high"))) {
             return 2; // High impact requires 2 signatures

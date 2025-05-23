@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC7786GatewaySource, IERC7786Receiver} from "./interfaces/IERC7786.sol";
-import {IInputBox} from "./interfaces/IInputbox.sol";
-import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
-import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IERC20Mintable} from './interfaces/IERC20Mintable.sol';
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {AttributeLib} from "./libraries/AttributeLib.sol";
+import { IERC7786GatewaySource, IERC7786Receiver } from "./interfaces/IERC7786.sol";
+import { IInputBox } from "./interfaces/IInputbox.sol";
+import { CAIP2 } from "@openzeppelin/contracts/utils/CAIP2.sol";
+import { CAIP10 } from "@openzeppelin/contracts/utils/CAIP10.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20Mintable } from "./interfaces/IERC20Mintable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { AttributeLib } from "./libraries/AttributeLib.sol";
 
 import "forge-std/console.sol";
 /**
@@ -70,7 +70,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         bytes32 mid = _prepareAndSendMessage(token, destinationBridge, to, amount);
-        
+
         _storeTransfer(mid, token, to, amount, 0);
 
         return mid;
@@ -105,20 +105,13 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
      * @param attributes Additional attributes for message execution
      * @return The function selector of executeMessage
      */
-    function executeMessage(        
+    function executeMessage(
         string calldata messageId, // gateway specific, empty or unique
         string calldata sourceChain, // CAIP-2 chain identifier
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable returns (bytes4) {
-        //todo: implement logic of minting or whatever
-        console.log("miiinting");
-        bytes32 mid = messageIdToMid[messageId];
-        CrossChainTransfer storage transfer = crossChainTransfers[mid];
-        if (transfer.state == STATE.PENDING) {
-            transfer.state = STATE.EXECUTED;
-        }
         return this.executeMessage.selector;
     }
 
@@ -166,7 +159,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
 
         string memory destinationChain = CAIP2.format("eip155", Strings.toString(1));
         string memory receiver = CAIP10.format("eip155", Strings.toHexString(uint256(uint160(to))));
-        
+
         return _sendMessage(destinationChain, receiver, payloadInputBox, attributes);
     }
 
@@ -196,7 +189,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
             CAIP10.format(destinationChain, receiver),
             payload,
             attributes
-        );    
+        );
     }
 
     // IMPACT CALCULATION METHODS ------------------------------------------------------------
@@ -208,10 +201,10 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
      * @return The impact level as a string ("high" or "low")
      */
     function _calculateImpact(address token, uint256 amount) internal view returns (string memory) {
-        //here for example we could measure the impact on liquidity of the token or smthng, for now 
+        //here for example we could measure the impact on liquidity of the token or smthng, for now
         // we will just see how much % of the supply is being transferred
         uint256 supply = IERC20(token).totalSupply();
-        uint256 impact = (amount *10**18 * 100) / supply;
+        uint256 impact = (amount * 10 ** 18 * 100) / supply;
         // This will be the number of signatures required to execute the message
         if (impact > 0) return "high";
         return "low";
@@ -256,13 +249,7 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
      * @param amount The transfer amount
      * @param chainId The destination chain ID
      */
-    function _storeTransfer(
-        bytes32 mid,
-        address token,
-        address to,
-        uint256 amount,
-        uint256 chainId
-    ) internal {
+    function _storeTransfer(bytes32 mid, address token, address to, uint256 amount, uint256 chainId) internal {
         crossChainTransfers[mid] = CrossChainTransfer({
             token: token,
             to: to,

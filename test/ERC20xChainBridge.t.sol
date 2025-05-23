@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC20xChainBridge} from "../contracts/ERC20xChainBridge.sol";
-import {InputBox} from "../contracts/inputBox.sol";
-import {QuorumAttestator} from "../contracts/quorumAttestator.sol";
-import {ERC20Mock} from "../contracts/mocks/ERC20Mock.sol";
+import { ERC20xChainBridge } from "../contracts/ERC20xChainBridge.sol";
+import { InputBox } from "../contracts/inputBox.sol";
+import { QuorumAttestator } from "../contracts/quorumAttestator.sol";
+import { ERC20Mock } from "../contracts/mocks/ERC20Mock.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "forge-std/Test.sol";
@@ -39,7 +39,7 @@ contract ERC20xChainBridgeTest is Test {
         inputBox = new InputBox(address(quorumAttestator), admin);
         erc20xChainBridge = new ERC20xChainBridge(address(inputBox));
         mock_erc20xChainBridge = new ERC20xChainBridge(address(inputBox));
-        inputBox.registerBridge(address(mock_erc20xChainBridge));// This step is bc we cannot deterministically deploy in same network twice
+        inputBox.registerBridge(address(mock_erc20xChainBridge)); // This step is bc we cannot deterministically deploy in same network twice
         vm.stopPrank();
     }
 
@@ -49,7 +49,12 @@ contract ERC20xChainBridgeTest is Test {
 
         vm.startPrank(user1);
         erc20Mock.approve(address(erc20xChainBridge), 100);
-        bytes32 messageId = erc20xChainBridge.transferCrossChain{value: 0.1 ether}(address(erc20Mock), address(mock_erc20xChainBridge), address(user2), 100);
+        bytes32 messageId = erc20xChainBridge.transferCrossChain{ value: 0.1 ether }(
+            address(erc20Mock),
+            address(mock_erc20xChainBridge),
+            address(user2),
+            100
+        );
         vm.stopPrank();
 
         vm.startPrank(attestator1);
