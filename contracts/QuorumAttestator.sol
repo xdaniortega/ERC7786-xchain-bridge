@@ -77,7 +77,11 @@ contract QuorumAttestator is Ownable {
         emit MessageAttested(_messageId, msg.sender, status.numAttestations);
     }
 
-    function isConsensusReached(bytes32 _messageId) public view returns (bool) {
-        return attestations[_messageId].numAttestations >= attestorsList.length;
+    function isSigner(address _attestor) public view returns (bool) {
+        return isAttestor[_attestor];
+    }
+
+    function getAttestationsReached(bytes32 _messageId) public view returns (uint256) {
+        return attestations[_messageId].numAttestations;
     }
 }

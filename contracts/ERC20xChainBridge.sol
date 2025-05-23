@@ -72,7 +72,12 @@ contract ERC20xChainBridge is IERC7786Receiver, IERC7786GatewaySource, Reentranc
         //here for example we could measure the impact on liquidity of the token or smthng, for now 
         // we will just see how much % of the supply is being transferred
         uint256 supply = IERC20(token).totalSupply();
-        return (amount * 100) / supply;
+        uint256 impact = (amount * 100) / supply;
+        // This will be the number of signatures required to execute the message
+        if(impact > 0 ) return 2;
+        else{
+            return 1;
+        }
     }
 
     function _createPayload(address token, uint256 amount, address to) internal pure returns (bytes memory) {
