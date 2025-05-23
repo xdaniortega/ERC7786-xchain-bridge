@@ -13,15 +13,17 @@ contract ERC20xChainBridgeTest is Test {
     QuorumAttestator quorumAttestator;
     ERC20Mock erc20Mock;
 
-    address admin = vm.addr(0);
-    address attestator1 = vm.addr(1);
-    address attestator2 = vm.addr(2);
-    address attestator3 = vm.addr(3);
+    address admin = vm.addr(1);
+    address attestator1 = vm.addr(2);
+    address attestator2 = vm.addr(3);
+    address attestator3 = vm.addr(4);
+    address[] initialAttestors = [admin, attestator1, attestator2, attestator3];
 
     function setUp() public {
         vm.startPrank(admin);
-        erc20Mock = new ERC20Mock("Test", "TEST", 18);
-        quorumAttestator = new QuorumAttestator([admin, attestator1, attestator2, attestator3], 2, admin);
+        erc20Mock = new ERC20Mock("Test", "TEST");
+
+        quorumAttestator = new QuorumAttestator(initialAttestors, admin);
         inputBox = new InputBox(address(quorumAttestator), admin);
         erc20xChainBridge = new ERC20xChainBridge(address(inputBox));
         vm.stopPrank();

@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IInputbox.sol";
+import {IInputBox} from "./interfaces/IInputbox.sol";
+import {IQuorumAttestator} from "./interfaces/IQuorumAttestator.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract InputBox is IInputBox, Ownable {
+    error InvalidQuorumAttestator();
+
+    event QuorumAttestatorUpdated(address indexed newQuorumAttestator);
+
     struct MessageData {
         string destinationChain;
         string receiver;
         bytes payload;
         bytes[] attributes;
+        uint256 blockTimestamp;
     }
 
     mapping(bytes32 => MessageData) public messageStore;
     mapping(bytes32 => bool) public isExecuted;
 
     address public quorumAttestator;
+    uint256 public nonce;
 
     constructor(address _quorumAttestator, address initialOwner) Ownable(initialOwner) {
         if (_quorumAttestator == address(0)) revert InvalidQuorumAttestator();
@@ -52,10 +59,11 @@ contract InputBox is IInputBox, Ownable {
             destinationChain: _destinationChain,
             receiver: _receiver,
             payload: _payload,
-            attributes: _attributes
+            attributes: _attributes,
+            blockTimestamp: block.timestamp
         });
 
-        emit MessageProposed(messageId, msg.sender, _destinationChain, _receiver);
+        emit MessageProposed(messageId, _destinationChain, _receiver);
         return messageId;
     }
 
@@ -87,6 +95,7 @@ contract InputBox is IInputBox, Ownable {
         bytes memory _payload,
         bytes[] memory _attributes
     ) internal virtual {
+        nonce++;
         // call execute function of the target contract
         emit MessageExecuted(_messageId, _destinationChain, _receiver);
     }
@@ -95,4 +104,9 @@ contract InputBox is IInputBox, Ownable {
         if (messageStore[_messageId].blockTimestamp == 0) revert MessageNotFound();
         return messageStore[_messageId];
     }
+
+    function getNonce() public view returns (uint256) {
+        return nonce;
+    }
+
 }

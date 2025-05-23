@@ -31,7 +31,6 @@ contract QuorumAttestator is Ownable {
     error NotAttestor();
     error AlreadyAttested();
     error InvalidSignature();
-    error InvalidThreshold();
     error AttestorAlreadyExists();
     error AttestorNotFound();
     error ZeroAddress();
@@ -47,11 +46,8 @@ contract QuorumAttestator is Ownable {
         _;
     }
 
-    constructor(address[] memory _initialAttestors, uint256 _threshold, address initialOwner) Ownable(initialOwner) {
-        if (_threshold == 0) revert InvalidThreshold();
-        if (_threshold > _initialAttestors.length) revert InvalidThreshold();
-
-        _addAttestors(_initialAttestors);
+    constructor(address[] memory _initialAttestors, address initialOwner) Ownable(initialOwner) {
+        _addAttestor(_initialAttestors);
     }
 
     function _addAttestor(address[] memory _attestors) internal {
@@ -82,6 +78,6 @@ contract QuorumAttestator is Ownable {
     }
 
     function isConsensusReached(bytes32 _messageId) public view returns (bool) {
-        return attestations[_messageId].numAttestations >= signatureThreshold;
+        return attestations[_messageId].numAttestations >= attestorsList.length;
     }
 }

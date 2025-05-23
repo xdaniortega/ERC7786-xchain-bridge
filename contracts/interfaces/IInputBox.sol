@@ -27,4 +27,5 @@ interface IInputBox {
         bytes[] memory _attributes
     ) external returns (bytes32 messageId);
     function executeMessage(bytes32 _messageId) external;
+    function getNonce() external view returns (uint256);
 }
