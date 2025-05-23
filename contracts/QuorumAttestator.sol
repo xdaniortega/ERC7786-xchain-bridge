@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
+import {AttributeLib} from "./libraries/AttributeLib.sol";
 
 /**
  * @title QuorumAttestator
@@ -16,6 +16,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract QuorumAttestator is Ownable {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
+    using AttributeLib for bytes[];
 
     mapping(address => bool) public isAttestor;
     address[] public attestorsList;
@@ -61,6 +62,21 @@ contract QuorumAttestator is Ownable {
         }
     }
 
+    /// @notice Assigns the number of required signatures based on message attributes
+    /// @param attributes The array of encoded attributes from the message
+    /// @return The number of required signatures (1 for low impact, 2 for high impact)
+    function assignThresholdSignatures(bytes[] calldata attributes) external pure returns (uint256) {
+        bytes memory impactValue = attributes.getAttributeValue(AttributeLib.IMPACT_KEY);
+        if (impactValue.length == 0) {
+            return 1; // Default to low impact if no impact attribute found
+        }
+        
+        string memory impact = abi.decode(impactValue, (string));
+        if (keccak256(bytes(impact)) == keccak256(bytes("high"))) {
+            return 2; // High impact requires 2 signatures
+        }
+        return 1; // Low impact requires 1 signature
+    }
 
     function attestMessage(bytes32 _messageId, bytes memory _signature) public onlyAttestor {
         AttestationData storage status = attestations[_messageId];
